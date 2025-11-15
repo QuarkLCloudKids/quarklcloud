@@ -1,0 +1,114 @@
+The Netlify deploy errored, with the following guidance provided:
+
+Diagnosis
+- Relevant error lines: [line 66](#L66) shows the file that failed, and [line 67](#L67) is the actual ESLint error: Do not use an `<a>` element to navigate to `/`. Use `<Link />` from next (this caused the build to exit non-zero). The build stop is shown at [line 63](#L63) and the failing build command at [line 84](#L84)-[line 88](#L88).
+- Error type and cause: an ESLint rule enforced by Next.js flagged a navigation issue in ./src/app/connect/progress/page.tsx: you are using a plain <a> to navigate internally (to "/") instead of next/link's <Link /> component. Next.js runs ESLint during production builds and ESLint errors cause next build to fail by returning a non-zero exit code.
+
+Solution
+1) Preferred fix — replace the plain anchor with next/link
+- Open the file in the repo: https://github.com/QuarkLCloudKids/quarklcloud/blob/main/src/app/connect/progress/page.tsx
+- Find the anchor used for client-side navigation (the error points to [line 67](#L67), which is the "11:11" position in that file).
+- Replace it with Next's Link component. Example change:
+
+```tsx
+// before
+<a href="/">Go home</a>
+
+// after
+import Link from 'next/link';
+
+<Link href="/">Go home</Link>
+```
+
+- Commit and push the change, then trigger a new Netlify build.
+
+2) Temporary/workaround — disable ESLint run during the build (not recommended long-term)
+- If you cannot fix all lint errors immediately, you can tell Next to ignore ESLint during builds by adding/updating next.config.js at the project root:
+
+```js
+// next.config.js
+/** @type {import('next').NextConfig} */
+const nextConfig = {
+  eslint: {
+    ignoreDuringBuilds: true
+  }
+}
+
+module.exports = nextConfig;
+```
+
+- Commit and push. This will allow the build to succeed while you fix the lint issues locally. Note: this only skips linting during build and does not fix the underlying code issue.
+
+Why this fixes it
+- Next.js enforces certain accessibility/navigation rules via ESLint in production builds. Replacing <a href="/"> with <Link href="/"> satisfies the rule and prevents the ESLint error that made next build return a non-zero exit code (see [line 67](#L67)).
+
+The relevant error logs are:
+
+Line 0: build-image version: d70b0ef54da475d70173c05e02b98ca494649213 (noble)
+Line 1: buildbot version: 4c332285428c21109b8c0909375e4a36d2b29473
+Line 2: Fetching cached dependencies
+Line 3: Failed to fetch cache, continuing with build
+Line 4: Starting to prepare the repo for build
+Line 5: No cached dependencies found. Cloning fresh repo
+Line 6: git clone --filter=blob:none https://github.com/QuarkLCloudKids/quarklcloud
+Line 7: Preparing Git Reference refs/heads/main
+Line 8: Starting to install dependencies
+Line 9: v22.21.1 is already installed.
+Line 10: Now using node v22.21.1 (npm v10.9.4)
+Line 11: Enabling Node.js Corepack
+Line 12: Started restoring cached build plugins
+Line 13: Finished restoring cached build plugins
+Line 53: [96m[1m────────────────────────────────────────────────────────────────[22m[39m
+Line 54: ​
+Line 55: [36m$ npm run build[39m
+Line 56: > Luis-Cortes@0.1.0 build
+Line 57: > next build
+Line 58: [33m[1m⚠[22m[39m No build cache found. Please configure build caching for faster rebuilds. Read more: https://nextjs.org/doc
+Line 59:    [1m[38;2;173;127;168m▲ Next.js 15.4.6[39m[22m
+Line 60:  [37m[1m [22m[39m Creating an optimized production build ...
+Line 61:  [32m[1m✓[22m[39m Compiled successfully in 3.0s
+Line 62:  [37m[1m [22m[39m Linting and checking validity of types ...
+Line 63: Failed during stage 'building site': Build script returned non-zero exit code: 2
+Line 64: [31m
+Line 65: Failed to compile.[39m
+Line 66: [36m./src/app/connect/progress/page.tsx[39m
+Line 67: [33m11[39m:[33m11[39m  [31m[1mError[22m[39m: Do not use an `<a>` element to navigate to `/`. Use `<Link />` from `next/l
+Line 68: [33m23[39m:[33m15[39m  [33m[1mWarning[22m[39m: Using `<img>` could result in slower LCP and higher bandwidth. Consider u
+Line 69: [36m./src/components/about.tsx[39m
+Line 70: [33m25[39m:[33m39[39m  [33m[1mWarning[22m[39m: The ref value 'sectionRef.current' will likely have changed by the time t
+Line 71: [33m42[39m:[33m13[39m  [33m[1mWarning[22m[39m: Using `<img>` could result in slower LCP and higher bandwidth. Consider u
+Line 72: [36m./src/components/hero.tsx[39m
+Line 73: [33m110[39m:[33m15[39m  [33m[1mWarning[22m[39m: Using `<img>` could result in slower LCP and higher bandwidth. Consider 
+Line 74: [36m./src/components/projects.tsx[39m
+Line 75: [33m25[39m:[33m39[39m  [33m[1mWarning[22m[39m: The ref value 'sectionRef.current' will likely have changed by the time t
+Line 76: [33m86[39m:[33m17[39m  [33m[1mWarning[22m[39m: Using `<img>` could result in slower LCP and higher bandwidth. Consider u
+Line 77: [36m./src/components/services.tsx[39m
+Line 78: [33m25[39m:[33m39[39m  [33m[1mWarning[22m[39m: The ref value 'sectionRef.current' will likely have changed by the time t
+Line 79: [36m./src/components/trabajos.tsx[39m
+Line 80: [33m25[39m:[33m39[39m  [33m[1mWarning[22m[39m: The ref value 'sectionRef.current' will likely have changed by the time t
+Line 81: [33m67[39m:[33m15[39m  [33m[1mWarning[22m[39m: Using `<img>` could result in slower LCP and higher bandwidth. Consider u
+Line 82: [36minfo[39m  - Need to disable some ESLint rules? Learn more here: https://nextjs.org/docs/app/api-reference/config/eslint#di
+Line 83: [91m[1m​[22m[39m
+Line 84: [91m[1m"build.command" failed                                        [22m[39m
+Line 85: [91m[1m────────────────────────────────────────────────────────────────[22m[39m
+Line 86: ​
+Line 87:   [31m[1mError message[22m[39m
+Line 88:   Command failed with exit code 1: npm run build
+Line 89: ​
+Line 90:   [31m[1mError location[22m[39m
+Line 91:   In Build command from Netlify app:
+Line 92:   npm run build
+Line 93: ​
+Line 94:   [31m[1mResolved config[22m[39m
+Line 95:   build:
+Line 96:     command: npm run build
+Line 97:     commandOrigin: ui
+Line 98:     publish: /opt/build/repo/.next
+Line 99:     publishOrigin: ui
+Line 100:   plugins:
+Line 101:     - inputs: {}
+Line 102:       origin: ui
+Line 103:       package: "@netlify/plugin-nextjs"
+Line 104: Build failed due to a user error: Build script returned non-zero exit code: 2
+Line 105: Failing build: Failed to build site
+Line 106: Finished processing build request in 27.969s
