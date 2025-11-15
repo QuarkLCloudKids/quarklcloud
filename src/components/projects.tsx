@@ -72,7 +72,7 @@ export function Projects() {
           {projects.map((project, index) => (
             <a
               key={project.id}
-              href={project.progressUrl ?? (project.showOnlyDemo ? project.demo : project.github)}
+              href={project.progressUrl ?? project.demo ?? "#"}
               target={project.progressUrl ? "_self" : "_blank"}
               rel={project.progressUrl ? undefined : "noopener noreferrer"}
               className={`group bg-white border border-gray-200 rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl hover:border-gray-900 transition-all duration-500 hover:-translate-y-2 transform cursor-pointer block ${
